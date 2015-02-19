@@ -1,4 +1,4 @@
-package ru.spbau.skrivohatskiy.java.hw1;
+package ru.spbau.skrivohatskiy.task1;
 
 import java.util.ArrayList;
 import java.util.Collections;

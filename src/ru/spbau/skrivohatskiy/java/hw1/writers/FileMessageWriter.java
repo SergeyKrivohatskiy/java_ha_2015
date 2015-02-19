@@ -6,7 +6,7 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.List;
 
-import ru.spbau.skrivohatskiy.java.hw1.Message;
+import ru.spbau.skrivohatskiy.task1.Message;
 
 /**
  * Writes messages into file

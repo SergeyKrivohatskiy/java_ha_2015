@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.spbau.skrivohatskiy.java.hw1.Message;
+import ru.spbau.skrivohatskiy.task1.Message;
 
 /**
  * 

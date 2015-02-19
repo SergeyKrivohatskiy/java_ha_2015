@@ -2,7 +2,7 @@ package ru.spbau.skrivohatskiy.java.hw1.writers;
 
 import java.io.IOException;
 
-import ru.spbau.skrivohatskiy.java.hw1.Message;
+import ru.spbau.skrivohatskiy.task1.Message;
 
 /**
  * Compress two messages into one and write it using other {@link MessageWriter}
