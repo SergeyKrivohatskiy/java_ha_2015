@@ -31,6 +31,11 @@ public class Main {
      *            if presented
      */
     public static void main(String[] args) {
+	if (args.length == 0) {
+	    printError("At least one argument required\n"
+		    + "Usage: java -jar task1.jar in.file [out.file]");
+	    return;
+	}
 	try (FileMessageReader in = new FileMessageReader(args[0]);
 		MessageWriter out = new CompressingMessageWriter(
 			getBaseWriter(args))) {
