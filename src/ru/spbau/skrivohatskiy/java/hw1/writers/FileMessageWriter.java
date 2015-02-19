@@ -8,14 +8,32 @@ import java.util.List;
 
 import ru.spbau.skrivohatskiy.java.hw1.Message;
 
+/**
+ * Writes messages into file
+ * 
+ * @author Sergey Krivohatskiy
+ *
+ */
 public class FileMessageWriter implements MessageWriter {
 
     private final PrintStream out;
 
+    /**
+     * @param file
+     *            output file
+     * @throws FileNotFoundException
+     *             if file isn't exists or unavailable to write
+     */
     public FileMessageWriter(File file) throws FileNotFoundException {
 	out = new PrintStream(file);
     }
 
+    /**
+     * @param fileName
+     *            output file name
+     * @throws FileNotFoundException
+     *             if file isn't exists or unavailable to write
+     */
     public FileMessageWriter(String fileName) throws FileNotFoundException {
 	this(new File(fileName));
     }

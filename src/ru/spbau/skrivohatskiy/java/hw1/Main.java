@@ -10,8 +10,23 @@ import ru.spbau.skrivohatskiy.java.hw1.writers.ConsoleMessageWriter;
 import ru.spbau.skrivohatskiy.java.hw1.writers.FileMessageWriter;
 import ru.spbau.skrivohatskiy.java.hw1.writers.MessageWriter;
 
+/**
+ * 
+ * @author Sergey Krivohatskiy
+ * 
+ *         hw1 main class
+ *
+ */
 public class Main {
 
+    /**
+     * Reads messages from input file, compress them and write them into output
+     * file or console
+     * 
+     * @param args
+     *            args[0] is an input file name, args[1] is output file name if
+     *            presented
+     */
     public static void main(String[] args) {
 	try (FileMessageReader in = new FileMessageReader(args[0]);
 		MessageWriter out = new CompressingMessageWriter(

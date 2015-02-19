@@ -10,10 +10,23 @@ import java.util.List;
 
 import ru.spbau.skrivohatskiy.java.hw1.Message;
 
+/**
+ * 
+ * @author Sergey Krivohatskiy
+ *
+ */
 public class FileMessageReader implements Closeable {
     private final BufferedReader in;
     private Message nextMsg;
 
+    /**
+     * @param file
+     *            input file
+     * @throws IllegalMessageFormatException
+     *             if first message can't be red
+     * @throws IOException
+     *             if IOException occurred while reading first message
+     */
     public FileMessageReader(File file) throws IllegalMessageFormatException,
 	    IOException {
 	in = new BufferedReader(new FileReader(file));
@@ -25,11 +38,26 @@ public class FileMessageReader implements Closeable {
 	}
     }
 
+    /**
+     * @param fileName
+     *            input file name
+     * @throws IllegalMessageFormatException
+     *             if first message can't be red
+     * @throws IOException
+     *             if IOException occurred while reading first message
+     */
     public FileMessageReader(String fileName)
 	    throws IllegalMessageFormatException, IOException {
 	this(new File(fileName));
     }
 
+    /**
+     * @return red message
+     * @throws IllegalMessageFormatException
+     *             if next message can't be red
+     * @throws IOException
+     *             if IOException occurred while reading next message
+     */
     public Message readMessage() throws IllegalMessageFormatException,
 	    IOException {
 	Message old = nextMsg;
@@ -42,11 +70,14 @@ public class FileMessageReader implements Closeable {
 	in.close();
     }
 
+    /**
+     * @return true if there is a message available
+     */
     public boolean hasNext() {
 	return nextMsg != null;
     }
 
-    public Message next() throws IllegalMessageFormatException, IOException {
+    private Message next() throws IllegalMessageFormatException, IOException {
 	try {
 	    String linesCountStr = in.readLine();
 	    if (linesCountStr == null) {

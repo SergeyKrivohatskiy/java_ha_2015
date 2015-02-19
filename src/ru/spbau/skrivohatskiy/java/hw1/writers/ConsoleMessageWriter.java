@@ -5,6 +5,12 @@ import java.util.ListIterator;
 
 import ru.spbau.skrivohatskiy.java.hw1.Message;
 
+/**
+ * Writes messages to console(System.out)
+ * 
+ * @author Sergey Krivohatskiy
+ *
+ */
 public class ConsoleMessageWriter implements MessageWriter {
     private int messageIndex = 1;
 
