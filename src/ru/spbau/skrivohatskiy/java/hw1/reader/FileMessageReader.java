@@ -11,6 +11,19 @@ import java.util.List;
 import ru.spbau.skrivohatskiy.task1.Message;
 
 /**
+ * Reads messages one by one from specified file
+ * 
+ * Message format:
+ * 
+ * <pre>
+ * n
+ * MessageContent line 1
+ * MessageContent line 2
+ * ...
+ * MessageContent line n
+ * </pre>
+ * 
+ * where n is a message content size in lines
  * 
  * @author Sergey Krivohatskiy
  *
@@ -71,7 +84,7 @@ public class FileMessageReader implements Closeable {
     }
 
     /**
-     * @return true if there is a message available
+     * @return true if there is a message available to read
      */
     public boolean hasNext() {
 	return nextMsg != null;

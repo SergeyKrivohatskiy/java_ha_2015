@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * Message consists of message content what is an array of {@link String}'s
  * 
  * @author Sergey Krivohatskiy
  *
@@ -30,7 +31,7 @@ public class Message {
     }
 
     /**
-     * Appends other message content to this message content
+     * Appends content of other message to content of this message
      * 
      * @param msg
      *            other message
@@ -40,7 +41,7 @@ public class Message {
     }
 
     /**
-     * @return this message content
+     * @return this message content as unmodifiable list
      */
     public List<String> getLines() {
 	return Collections.unmodifiableList(lines);

@@ -11,8 +11,6 @@ import ru.spbau.skrivohatskiy.task1.Message;
  */
 public interface MessageWriter extends Closeable {
     /**
-     * Writes message to somewhere
-     * 
      * @param msg
      *            message to write
      */

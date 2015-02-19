@@ -12,9 +12,12 @@ import ru.spbau.skrivohatskiy.java.hw1.writers.MessageWriter;
 
 /**
  * 
+ * hw1 main class
+ * 
+ * @see #main(String[])
+ * 
  * @author Sergey Krivohatskiy
  * 
- *         hw1 main class
  *
  */
 public class Main {
@@ -24,8 +27,8 @@ public class Main {
      * file or console
      * 
      * @param args
-     *            args[0] is an input file name, args[1] is output file name if
-     *            presented
+     *            args[0] is an input file name, args[1] is an output file name
+     *            if presented
      */
     public static void main(String[] args) {
 	try (FileMessageReader in = new FileMessageReader(args[0]);

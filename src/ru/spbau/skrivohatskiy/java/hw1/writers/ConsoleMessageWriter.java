@@ -8,6 +8,18 @@ import ru.spbau.skrivohatskiy.task1.Message;
 /**
  * Writes messages to console(System.out)
  * 
+ * Message format:
+ * 
+ * <pre>
+ * Message n
+ * n.1 MessageContent line 1
+ * n.1 MessageContent line 2
+ * ...
+ * n.m MessageContent line m
+ * </pre>
+ * 
+ * where n is a message number and m is a message content size in lines
+ * 
  * @author Sergey Krivohatskiy
  *
  */
@@ -18,6 +30,9 @@ public class ConsoleMessageWriter implements MessageWriter {
     public void close() throws IOException {
     }
 
+    /**
+     * Writes message to console
+     */
     @Override
     public void writeMessage(Message msg) {
 	System.out.println("Message " + messageIndex);

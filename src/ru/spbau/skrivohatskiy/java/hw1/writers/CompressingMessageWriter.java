@@ -25,6 +25,10 @@ public class CompressingMessageWriter implements MessageWriter {
 	this.baseWriter = baseWriter;
     }
 
+    /**
+     * If there is uncompressed message when closing uncompressed message will
+     * be written as is
+     */
     @Override
     public void close() throws IOException {
 	if (firstMsg != null) {
@@ -33,6 +37,10 @@ public class CompressingMessageWriter implements MessageWriter {
 	baseWriter.close();
     }
 
+    /**
+     * Compress two messages into one and write it using other
+     * {@link MessageWriter}
+     */
     @Override
     public void writeMessage(Message msg) {
 	if (firstMsg == null) {
