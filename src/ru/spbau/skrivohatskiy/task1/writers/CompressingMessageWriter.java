@@ -42,7 +42,7 @@ public class CompressingMessageWriter implements MessageWriter {
      * {@link MessageWriter}
      */
     @Override
-    public void writeMessage(Message msg) {
+    public void writeMessage(Message msg) throws IOException {
 	if (firstMsg == null) {
 	    firstMsg = msg;
 	    return;

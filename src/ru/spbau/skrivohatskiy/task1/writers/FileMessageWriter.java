@@ -1,9 +1,10 @@
 package ru.spbau.skrivohatskiy.task1.writers;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 import java.util.List;
 
 import ru.spbau.skrivohatskiy.task1.Message;
@@ -28,7 +29,7 @@ import ru.spbau.skrivohatskiy.task1.Message;
  */
 public class FileMessageWriter implements MessageWriter {
 
-    private final PrintStream out;
+    private final BufferedWriter out;
 
     /**
      * @param file
@@ -40,7 +41,7 @@ public class FileMessageWriter implements MessageWriter {
      *             opening or creating the file
      */
     public FileMessageWriter(File file) throws FileNotFoundException {
-	out = new PrintStream(file);
+	out = new BufferedWriter(new PrintWriter(file));
     }
 
     /**
@@ -65,12 +66,14 @@ public class FileMessageWriter implements MessageWriter {
      * Writes message to file
      */
     @Override
-    public void writeMessage(Message msg) {
+    public void writeMessage(Message msg) throws IOException {
 	List<String> msgLines = msg.getLines();
-	out.println(msgLines.size());
+	out.write(Integer.toString(msgLines.size()));
+	out.newLine();
 
 	for (String line : msgLines) {
-	    out.println(line);
+	    out.write(line);
+	    out.newLine();
 	}
     }
 

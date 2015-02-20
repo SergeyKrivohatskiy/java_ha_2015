@@ -44,6 +44,8 @@ public class Main {
 	    }
 	} catch (FileNotFoundException e) {
 	    printError("FileNotFoundException: " + e.getMessage());
+	} catch (SecurityException e) {
+	    printError("SecurityException: " + e.getMessage());
 	} catch (IOException e) {
 	    printError("IOException: " + e.getMessage());
 	} catch (IllegalMessageFormatException e) {
