@@ -1,4 +1,4 @@
-package ru.spbau.skrivohatskiy.java.hw1.writers;
+package ru.spbau.skrivohatskiy.task1.writers;
 
 import java.io.IOException;
 

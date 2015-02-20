@@ -3,12 +3,12 @@ package ru.spbau.skrivohatskiy.task1;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import ru.spbau.skrivohatskiy.java.hw1.reader.FileMessageReader;
-import ru.spbau.skrivohatskiy.java.hw1.reader.IllegalMessageFormatException;
-import ru.spbau.skrivohatskiy.java.hw1.writers.CompressingMessageWriter;
-import ru.spbau.skrivohatskiy.java.hw1.writers.ConsoleMessageWriter;
-import ru.spbau.skrivohatskiy.java.hw1.writers.FileMessageWriter;
-import ru.spbau.skrivohatskiy.java.hw1.writers.MessageWriter;
+import ru.spbau.skrivohatskiy.task1.reader.FileMessageReader;
+import ru.spbau.skrivohatskiy.task1.reader.IllegalMessageFormatException;
+import ru.spbau.skrivohatskiy.task1.writers.CompressingMessageWriter;
+import ru.spbau.skrivohatskiy.task1.writers.ConsoleMessageWriter;
+import ru.spbau.skrivohatskiy.task1.writers.FileMessageWriter;
+import ru.spbau.skrivohatskiy.task1.writers.MessageWriter;
 
 /**
  * 

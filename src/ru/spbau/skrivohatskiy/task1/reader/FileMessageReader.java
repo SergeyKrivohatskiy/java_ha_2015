@@ -1,4 +1,4 @@
-package ru.spbau.skrivohatskiy.java.hw1.reader;
+package ru.spbau.skrivohatskiy.task1.reader;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
