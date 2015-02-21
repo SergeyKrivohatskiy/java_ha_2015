@@ -43,13 +43,11 @@ public class Main {
 		out.writeMessage(in.readMessage());
 	    }
 	} catch (FileNotFoundException e) {
-	    printError("FileNotFoundException: " + e.getMessage());
-	} catch (SecurityException e) {
-	    printError("SecurityException: " + e.getMessage());
+	    printError(e.getMessage());
 	} catch (IOException e) {
-	    printError("IOException: " + e.getMessage());
+	    printError(e.getMessage());
 	} catch (IllegalMessageFormatException e) {
-	    printError("IllegalMessageFormatException: " + e.getMessage());
+	    printError("Check message format in input file: " + e.getMessage());
 	}
     }
 

@@ -31,10 +31,13 @@ public class CompressingMessageWriter implements MessageWriter {
      */
     @Override
     public void close() throws IOException {
-	if (firstMsg != null) {
-	    baseWriter.writeMessage(firstMsg);
+	try {
+	    if (firstMsg != null) {
+		baseWriter.writeMessage(firstMsg);
+	    }
+	} finally {
+	    baseWriter.close();
 	}
-	baseWriter.close();
     }
 
     /**
