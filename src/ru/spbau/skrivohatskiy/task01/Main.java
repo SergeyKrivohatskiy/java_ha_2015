@@ -1,14 +1,14 @@
-package ru.spbau.skrivohatskiy.task1;
+package ru.spbau.skrivohatskiy.task01;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
-import ru.spbau.skrivohatskiy.task1.reader.FileMessageReader;
-import ru.spbau.skrivohatskiy.task1.reader.IllegalMessageFormatException;
-import ru.spbau.skrivohatskiy.task1.writers.CompressingMessageWriter;
-import ru.spbau.skrivohatskiy.task1.writers.ConsoleMessageWriter;
-import ru.spbau.skrivohatskiy.task1.writers.FileMessageWriter;
-import ru.spbau.skrivohatskiy.task1.writers.MessageWriter;
+import ru.spbau.skrivohatskiy.task01.reader.FileMessageReader;
+import ru.spbau.skrivohatskiy.task01.reader.IllegalMessageFormatException;
+import ru.spbau.skrivohatskiy.task01.writers.CompressingMessageWriter;
+import ru.spbau.skrivohatskiy.task01.writers.ConsoleMessageWriter;
+import ru.spbau.skrivohatskiy.task01.writers.FileMessageWriter;
+import ru.spbau.skrivohatskiy.task01.writers.MessageWriter;
 
 /**
  * 

@@ -1,9 +1,9 @@
-package ru.spbau.skrivohatskiy.task1.writers;
+package ru.spbau.skrivohatskiy.task01.writers;
 
 import java.io.IOException;
 import java.util.ListIterator;
 
-import ru.spbau.skrivohatskiy.task1.Message;
+import ru.spbau.skrivohatskiy.task01.Message;
 
 /**
  * Writes messages to console(System.out)

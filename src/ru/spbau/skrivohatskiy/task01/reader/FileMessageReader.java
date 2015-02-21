@@ -1,4 +1,4 @@
-package ru.spbau.skrivohatskiy.task1.reader;
+package ru.spbau.skrivohatskiy.task01.reader;
 
 import java.io.BufferedReader;
 import java.io.Closeable;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import ru.spbau.skrivohatskiy.task1.Message;
+import ru.spbau.skrivohatskiy.task01.Message;
 
 /**
  * Reads messages one by one from specified file
@@ -107,7 +107,7 @@ public class FileMessageReader implements Closeable {
 		String line = in.readLine();
 		if (line == null) {
 		    throw new IllegalMessageFormatException(
-			    "Message lines count < available lines in file");
+			    "Message lines count > available lines in file");
 		}
 		msgLines.add(line);
 	    }
@@ -116,7 +116,7 @@ public class FileMessageReader implements Closeable {
 
 	} catch (NumberFormatException e) {
 	    throw new IllegalMessageFormatException(
-		    "NumberFormatException: Expected lines count(Integer type)");
+		    "Expected lines count(Integer type)");
 	}
     }
 }

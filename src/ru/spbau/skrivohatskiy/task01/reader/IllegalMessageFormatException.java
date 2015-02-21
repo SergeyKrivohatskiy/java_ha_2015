@@ -1,6 +1,9 @@
-package ru.spbau.skrivohatskiy.task1.reader;
+package ru.spbau.skrivohatskiy.task01.reader;
 
 /**
+ * Thrown by {@link FileMessageReader} when file has illegal message format
+ * 
+ * @see FileMessageReader
  * 
  * @author Sergey Krivohatskiy
  *
