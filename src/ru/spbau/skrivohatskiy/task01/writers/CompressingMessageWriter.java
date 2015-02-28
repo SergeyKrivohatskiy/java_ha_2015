@@ -16,6 +16,10 @@ public class CompressingMessageWriter implements MessageWriter {
 
     private final MessageWriter baseWriter;
     private Message firstMsg = null;
+    /**
+     * True it there wasn't any exceptions when writing messages
+     */
+    private boolean good = true;
 
     /**
      * @param baseWriter
@@ -32,7 +36,7 @@ public class CompressingMessageWriter implements MessageWriter {
     @Override
     public void close() throws IOException {
 	try {
-	    if (firstMsg != null) {
+	    if (good && firstMsg != null) {
 		baseWriter.writeMessage(firstMsg);
 	    }
 	} finally {
@@ -47,11 +51,16 @@ public class CompressingMessageWriter implements MessageWriter {
     @Override
     public void writeMessage(Message msg) throws IOException {
 	if (firstMsg == null) {
-	    firstMsg = msg;
+	    firstMsg = new Message(msg);
 	    return;
 	}
 	firstMsg.append(msg);
-	baseWriter.writeMessage(firstMsg);
+	try {
+	    baseWriter.writeMessage(firstMsg);
+	} catch (Throwable anyExc) {
+	    good = false;
+	    throw anyExc;
+	}
 	firstMsg = null;
     }
 

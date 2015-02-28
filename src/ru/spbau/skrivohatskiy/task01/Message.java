@@ -24,10 +24,13 @@ public class Message {
     }
 
     /**
-     * Creates an empty message
+     * Creates copy of other message
+     * 
+     * @param msg
+     *            message to copy
      */
-    public Message() {
-	this(Collections.emptyList());
+    public Message(Message msg) {
+	this.lines = new ArrayList<>(msg.lines);
     }
 
     /**
@@ -37,7 +40,7 @@ public class Message {
      *            other message
      */
     public void append(Message msg) {
-	lines.addAll(msg.getLines());
+	lines.addAll(msg.lines);
     }
 
     /**

@@ -43,11 +43,11 @@ public class Main {
 		out.writeMessage(in.readMessage());
 	    }
 	} catch (FileNotFoundException e) {
-	    printError(e.getMessage());
+	    processException(e);
 	} catch (IOException e) {
-	    printError(e.getMessage());
+	    processException(e);
 	} catch (IllegalMessageFormatException e) {
-	    printError("Check message format in input file: " + e.getMessage());
+	    processException(e);
 	}
     }
 
@@ -58,6 +58,35 @@ public class Main {
 	} else {
 	    return new ConsoleMessageWriter();
 	}
+    }
+
+    private static void processException(Throwable exception) {
+	if (exception instanceof FileNotFoundException) {
+	    printError("Specified file not found or unavailable");
+	    printError("Please check programm arguments");
+	} else if (exception instanceof IOException) {
+	    printError("Failed to read or write file");
+	} else if (exception instanceof IllegalMessageFormatException) {
+	    printError("Failed to read message from input file");
+	    printError("Please check file format");
+	} else {
+	    throw new IllegalArgumentException("Cant process exception",
+		    exception);
+	}
+
+	printError("Exception message:");
+	printError(exception.getMessage());
+
+	if (exception.getSuppressed().length == 0) {
+	    return;
+	}
+
+	printError("Supressed exceptions:");
+
+	for (Throwable supressedExc : exception.getSuppressed()) {
+	    processException(supressedExc);
+	}
+
     }
 
     private static void printError(String errorMsg) {

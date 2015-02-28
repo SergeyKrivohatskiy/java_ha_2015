@@ -90,8 +90,7 @@ public class FileMessageReader implements Closeable {
 	    return new Message(msgLines);
 
 	} catch (NumberFormatException e) {
-	    throw new IllegalMessageFormatException(
-		    "Expected lines count(Integer type)");
+	    throw new IllegalMessageFormatException("Expected lines count", e);
 	}
     }
 
