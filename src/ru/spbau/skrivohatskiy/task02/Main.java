@@ -141,8 +141,23 @@ public class Main {
      *            name of the archive file to use
      */
     private static void printTree(String archiveFileName) {
-	// TODO Auto-generated method stub
-
+	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
+	    DirectoryTreeBuilder treeBuilder = new DirectoryTreeBuilder();
+	    DataPart part;
+	    while ((part = archive.readNextDataPart()) != null) {
+		treeBuilder.addPath(Paths.get(part.key));
+	    }
+	    treeBuilder.print(System.out);
+	} catch (FileNotFoundException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (ArchiveProcessingException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	}
     }
 
     private static void printUsage() {
