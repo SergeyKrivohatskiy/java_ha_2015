@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 /**
- * Creates new archive files and writes data parts to it
+ * Creates new archive file and writes {@link DataPart}'s to it
  * 
  * @author Sergey Krivohatskiy
  *

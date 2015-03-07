@@ -9,7 +9,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * 
+ * Creates directory tree by paths
  * 
  * @author Sergey Krivohatskiy
  *

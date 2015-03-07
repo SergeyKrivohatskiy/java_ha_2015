@@ -4,7 +4,9 @@
 package ru.spbau.skrivohatskiy.task02.archiveManager;
 
 /**
- * TODO
+ * ArchiveProcessingException indicates an invalid archive format. Thrown by
+ * {@link ArchiveReader} when it expects an archive created by
+ * {@link ArchiveWriter} and fails to read it
  * 
  * @author Sergey Krivohatskiy
  *

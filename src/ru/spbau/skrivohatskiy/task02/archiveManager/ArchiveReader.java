@@ -13,6 +13,9 @@ import java.io.UTFDataFormatException;
 import java.util.zip.ZipInputStream;
 
 /**
+ * Reads {@link DataPart}'s from an archive file created by
+ * {@link ArchiveWriter}
+ * 
  * @author Sergey Krivohatskiy
  *
  */
@@ -28,13 +31,17 @@ public class ArchiveReader implements Closeable {
      * @param archiveFileName
      *            archive file name
      * @throws IOException
-     *             TODO
+     *             if an I/O error has occurred when getting the first entry
+     * @throws ArchiveProcessingException
+     *             if unable to get the first entry from the archive
      */
-    public ArchiveReader(String archiveFileName) throws IOException {
+    public ArchiveReader(String archiveFileName) throws IOException,
+	    ArchiveProcessingException {
 	zipInStream = new ZipInputStream(new BufferedInputStream(
 		new FileInputStream(archiveFileName)));
 	if (zipInStream.getNextEntry() == null) {
-	    // TODO
+	    throw new ArchiveProcessingException(
+		    "Archive doesn't contain anything to read. No one entry found");
 	}
 	in = new DataInputStream(zipInStream);
 

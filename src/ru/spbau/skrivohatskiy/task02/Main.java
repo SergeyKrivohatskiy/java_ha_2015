@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipException;
 
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveProcessingException;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveReader;
@@ -34,6 +36,7 @@ public class Main {
     private static final String COMPRESS = "compress";
     private static final String DECOMPRESS = "decompress";
     private static final String PRINT_TREE = "list";
+    private static final PrintStream DEF_OUT = System.out;
 
     /**
      * Works with archives
@@ -53,22 +56,38 @@ public class Main {
 	    printUsage();
 	    return;
 	}
-
-	switch (args[0]) {
-	case COMPRESS:
-	    List<String> pathsList = Arrays.asList(Arrays.copyOfRange(args, 2,
-		    args.length));
-	    compress(args[1], pathsList);
-	    break;
-	case DECOMPRESS:
-	    decompress(args[1]);
-	    break;
-	case PRINT_TREE:
-	    printTree(args[1]);
-	    break;
-	default:
-	    printUsage();
-	    break;
+	try {
+	    switch (args[0]) {
+	    case COMPRESS:
+		List<String> pathsList = Arrays.asList(Arrays.copyOfRange(args,
+			2, args.length));
+		compress(args[1], pathsList);
+		break;
+	    case DECOMPRESS:
+		decompress(args[1]);
+		break;
+	    case PRINT_TREE:
+		printTree(args[1]);
+		break;
+	    default:
+		printUsage();
+		break;
+	    }
+	} catch (SecurityException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (ZipException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (FileNotFoundException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (ArchiveProcessingException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
 	}
 
     }
@@ -82,9 +101,11 @@ public class Main {
      * @param pathsList
      *            files and web pages paths. Relative paths for files and page
      *            paths started with "http://" for web pages
+     * @throws IOException
      * 
      */
-    private static void compress(String archiveFileName, List<String> pathsList) {
+    private static void compress(String archiveFileName, List<String> pathsList)
+	    throws IOException {
 	try (ArchiveWriter archive = new ArchiveWriter(archiveFileName)) {
 	    for (String path : pathsList) {
 		if (isUrl(path)) {
@@ -93,12 +114,6 @@ public class Main {
 		    processFsPath(archive, path);
 		}
 	    }
-	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (IOException e1) {
-	    // TODO Auto-generated catch block
-	    e1.printStackTrace();
 	}
     }
 
@@ -108,9 +123,12 @@ public class Main {
      * 
      * @param archiveFileName
      *            name of the archive file to extract
+     * @throws IOException
+     * @throws ArchiveProcessingException
      * 
      */
-    private static void decompress(String archiveFileName) {
+    private static void decompress(String archiveFileName) throws IOException,
+	    ArchiveProcessingException {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
 	    DataPart part;
 	    while ((part = archive.readNextDataPart()) != null) {
@@ -123,15 +141,6 @@ public class Main {
 		Files.createDirectories(fsPath.getParent());
 		Files.write(fsPath, part.data, StandardOpenOption.CREATE_NEW);
 	    }
-	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (ArchiveProcessingException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
 	}
     }
 
@@ -152,8 +161,11 @@ public class Main {
      * 
      * @param archiveFileName
      *            name of the archive file to use
+     * @throws ArchiveProcessingException
+     * @throws IOException
      */
-    private static void printTree(String archiveFileName) {
+    private static void printTree(String archiveFileName) throws IOException,
+	    ArchiveProcessingException {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
 	    DirectoryTreeBuilder treeBuilder = new DirectoryTreeBuilder();
 	    DataPart part;
@@ -164,21 +176,18 @@ public class Main {
 		    treeBuilder.addPath(Paths.get(part.key).normalize());
 		}
 	    }
-	    treeBuilder.print(System.out);
-	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (ArchiveProcessingException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
+	    treeBuilder.print(DEF_OUT);
 	}
     }
 
     private static void printUsage() {
-	// TODO
+	DEF_OUT.print("Usage: ");
+	DEF_OUT.println("java -jar task02.jar $COMMAND$ $archive_name$ [$file|url$..]");
+	String usageFormatLine = "Commands: \'%s\' to compress files and web pages "
+		+ "to the new archive file, \'%s\' to extract an existing archive, "
+		+ "\'%s\' to print files list of an existing archive";
+	DEF_OUT.println(String.format(usageFormatLine, COMPRESS, DECOMPRESS,
+		PRINT_TREE));
     }
 
     private static void processFsPath(ArchiveWriter archive, String path)
@@ -188,8 +197,14 @@ public class Main {
 
     private static void processFile(ArchiveWriter archive, File file)
 	    throws IOException {
-	if (!file.exists() || !file.canRead()) {
-	    // TODO
+	if (!file.exists()) {
+	    DEF_OUT.println(String.format(
+		    "Skipping file %s. File do not exists", file.getPath()));
+	    return;
+	} else if (!file.canRead()) {
+	    DEF_OUT.println(String.format(
+		    "Skipping file %s. File can't be read by the application",
+		    file.getPath()));
 	    return;
 	}
 	if (file.isDirectory()) {
@@ -202,8 +217,14 @@ public class Main {
 	byte[] dataBytes = null;
 	try {
 	    dataBytes = Files.readAllBytes(file.toPath());
+	} catch (SecurityException e) {
+	    DEF_OUT.println(String
+		    .format("Skipping file %s. File can't be red because of java security manager. $s",
+			    file.getPath(), e.getMessage()));
 	} catch (IOException e) {
-	    // TODO
+	    DEF_OUT.println(String.format(
+		    "Skipping file %s. Failed to read the file. %s",
+		    file.getPath(), e.getMessage()));
 	}
 
 	if (dataBytes != null) {
@@ -217,9 +238,13 @@ public class Main {
 	try (InputStream is = (new URL(path)).openStream()) {
 	    dataBytes = Utils.readAllBytes(is);
 	} catch (MalformedURLException e) {
-	    // TODO
+	    DEF_OUT.println(String.format(
+		    "Skipping url %s. Failed to parse the url. %s", path,
+		    e.getMessage()));
 	} catch (IOException e) {
-	    // TODO: unable to load a web page
+	    DEF_OUT.println(String.format(
+		    "Skipping url %s. Failed to read page content. %s", path,
+		    e.getMessage()));
 	}
 
 	if (dataBytes != null) {
