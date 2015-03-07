@@ -57,20 +57,15 @@ public class ArchiveReader implements Closeable {
 	    key = in.readUTF();
 	    int dataLen = in.readInt();
 	    byte[] data = new byte[dataLen];
-	    int dataReaded = in.read(data);
-	    if (dataReaded < dataLen) {
-		throw new ArchiveProcessingException(
-			"Failed to read data array. Expected " + dataLen
-				+ " bytes, readed " + dataReaded);
-	    }
+	    in.readFully(data);
 	    return new DataPart(key, data);
 	} catch (EOFException e) {
 	    if (key == null) { // EOF when reading key == normal EOF
 		return null;
 	    }
-	    // EOF when reading dataLen == invalid format
+	    // EOF when reading dataLen or data == invalid format
 	    throw new ArchiveProcessingException(
-		    "Failed to read data array sie: unexpected EOF", e);
+		    "Failed to read data part: unexpected EOF", e);
 	}
     }
 

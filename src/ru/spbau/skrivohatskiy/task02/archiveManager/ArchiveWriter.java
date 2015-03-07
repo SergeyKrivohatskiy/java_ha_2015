@@ -19,7 +19,7 @@ import java.util.zip.ZipOutputStream;
  *
  */
 public class ArchiveWriter implements Closeable {
-    private static final String ZIP_ENTRY_NAME = "Created by ArchiveWriter 0.1b";
+    private static final String ZIP_ENTRY_NAME = "Created by ArchiveWriter 0.2b";
     private final ZipOutputStream zipOutStream;
     private final DataOutputStream out;
     private boolean closed = false;

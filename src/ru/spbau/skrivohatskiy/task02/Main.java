@@ -1,11 +1,15 @@
 package ru.spbau.skrivohatskiy.task02;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,6 +17,7 @@ import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveProcessingException;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveReader;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveWriter;
 import ru.spbau.skrivohatskiy.task02.archiveManager.DataPart;
+import ru.spbau.skrivohatskiy.task02.utils.Utils;
 
 /**
  * 
@@ -82,9 +87,11 @@ public class Main {
     private static void compress(String archiveFileName, List<String> pathsList) {
 	try (ArchiveWriter archive = new ArchiveWriter(archiveFileName)) {
 	    for (String path : pathsList) {
-		// TODO process directories
-		DataPart dataPart = new DataPart(path, getDataPart(path));
-		archive.writeDataPart(dataPart);
+		if (isUrl(path)) {
+		    processUrl(archive, path);
+		} else {
+		    processFsPath(archive, path);
+		}
 	    }
 	} catch (FileNotFoundException e) {
 	    // TODO Auto-generated catch block
@@ -107,8 +114,14 @@ public class Main {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
 	    DataPart part;
 	    while ((part = archive.readNextDataPart()) != null) {
-		// TODO rewrite
-		Files.write(Paths.get(part.key), part.data);
+		Path fsPath;
+		if (isUrl(part.key)) {
+		    fsPath = urlToPath(part.key);
+		} else {
+		    fsPath = Paths.get(part.key);
+		}
+		Files.createDirectories(fsPath.getParent());
+		Files.write(fsPath, part.data, StandardOpenOption.CREATE_NEW);
 	    }
 	} catch (FileNotFoundException e) {
 	    // TODO Auto-generated catch block
@@ -145,7 +158,11 @@ public class Main {
 	    DirectoryTreeBuilder treeBuilder = new DirectoryTreeBuilder();
 	    DataPart part;
 	    while ((part = archive.readNextDataPart()) != null) {
-		treeBuilder.addPath(Paths.get(part.key));
+		if (isUrl(part.key)) {
+		    treeBuilder.addPath(urlToPath(part.key));
+		} else {
+		    treeBuilder.addPath(Paths.get(part.key).normalize());
+		}
 	    }
 	    treeBuilder.print(System.out);
 	} catch (FileNotFoundException e) {
@@ -164,13 +181,58 @@ public class Main {
 	// TODO
     }
 
-    private static byte[] getDataPart(String path) throws InvalidPathException,
-	    NoSuchFileException, IOException {
-	if (path.startsWith("http://")) {
+    private static void processFsPath(ArchiveWriter archive, String path)
+	    throws IOException {
+	processFile(archive, new File(path));
+    }
+
+    private static void processFile(ArchiveWriter archive, File file)
+	    throws IOException {
+	if (!file.exists() || !file.canRead()) {
 	    // TODO
-	    return null;
-	} else {
-	    return Files.readAllBytes(Paths.get(path));
+	    return;
 	}
+	if (file.isDirectory()) {
+	    for (File dirFile : file.listFiles()) {
+		processFile(archive, dirFile);
+	    }
+	    return;
+	}
+
+	byte[] dataBytes = null;
+	try {
+	    dataBytes = Files.readAllBytes(file.toPath());
+	} catch (IOException e) {
+	    // TODO
+	}
+
+	if (dataBytes != null) {
+	    archive.writeDataPart(new DataPart(file.getPath(), dataBytes));
+	}
+    }
+
+    private static void processUrl(ArchiveWriter archive, String path)
+	    throws IOException {
+	byte[] dataBytes = null;
+	try (InputStream is = (new URL(path)).openStream()) {
+	    dataBytes = Utils.readAllBytes(is);
+	} catch (MalformedURLException e) {
+	    // TODO
+	} catch (IOException e) {
+	    // TODO: unable to load a web page
+	}
+
+	if (dataBytes != null) {
+	    archive.writeDataPart(new DataPart(path, dataBytes));
+	}
+    }
+
+    private static boolean isUrl(String path) {
+	return path.startsWith("http://");
+    }
+
+    private static Path urlToPath(String urlStr) {
+	return Paths.get("http/"
+		+ urlStr.substring("http://".length()).replace('/', '_'));
     }
 }
