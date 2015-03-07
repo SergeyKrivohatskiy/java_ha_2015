@@ -1,7 +1,17 @@
 package ru.spbau.skrivohatskiy.task02;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+
+import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveReader;
+import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveWriter;
+import ru.spbau.skrivohatskiy.task02.archiveManager.DataPart;
 
 /**
  * 
@@ -33,7 +43,7 @@ public class Main {
      * @see #printTree(String)
      */
     public static void main(String[] args) {
-	if (args.length <= 2) {
+	if (args.length < 2) {
 	    printUsage();
 	    return;
 	}
@@ -69,8 +79,18 @@ public class Main {
      * 
      */
     private static void compress(String archiveFileName, List<String> pathsList) {
-	// TODO Auto-generated method stub
-
+	try (ArchiveWriter archive = new ArchiveWriter(archiveFileName)) {
+	    for (String path : pathsList) {
+		DataPart dataPart = new DataPart(path, getDataPart(path));
+		archive.writeDataPart(dataPart);
+	    }
+	} catch (FileNotFoundException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e1) {
+	    // TODO Auto-generated catch block
+	    e1.printStackTrace();
+	}
     }
 
     /**
@@ -82,8 +102,15 @@ public class Main {
      * 
      */
     private static void decompress(String archiveFileName) {
-	// TODO Auto-generated method stub
-
+	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
+	    DataPart part = archive.readNextDataPart();
+	} catch (FileNotFoundException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	}
     }
 
     /**
@@ -113,4 +140,13 @@ public class Main {
 	// TODO
     }
 
+    private static byte[] getDataPart(String path) throws InvalidPathException,
+	    NoSuchFileException, IOException {
+	if (path.startsWith("http://")) {
+	    // TODO
+	    return null;
+	} else {
+	    return Files.readAllBytes(Paths.get(path));
+	}
+    }
 }
