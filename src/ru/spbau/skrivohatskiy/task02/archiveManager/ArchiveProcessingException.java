@@ -23,4 +23,12 @@ public class ArchiveProcessingException extends Exception {
 	super(message, cause);
     }
 
+    /**
+     * @param message
+     *            the detail message
+     */
+    public ArchiveProcessingException(String message) {
+	super(message);
+    }
+
 }

@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
+import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveProcessingException;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveReader;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveWriter;
 import ru.spbau.skrivohatskiy.task02.archiveManager.DataPart;
@@ -81,6 +82,7 @@ public class Main {
     private static void compress(String archiveFileName, List<String> pathsList) {
 	try (ArchiveWriter archive = new ArchiveWriter(archiveFileName)) {
 	    for (String path : pathsList) {
+		// TODO process directories
 		DataPart dataPart = new DataPart(path, getDataPart(path));
 		archive.writeDataPart(dataPart);
 	    }
@@ -103,11 +105,18 @@ public class Main {
      */
     private static void decompress(String archiveFileName) {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
-	    DataPart part = archive.readNextDataPart();
+	    DataPart part;
+	    while ((part = archive.readNextDataPart()) != null) {
+		// TODO rewrite
+		Files.write(Paths.get(part.key), part.data);
+	    }
 	} catch (FileNotFoundException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	} catch (IOException e) {
+	    // TODO Auto-generated catch block
+	    e.printStackTrace();
+	} catch (ArchiveProcessingException e) {
 	    // TODO Auto-generated catch block
 	    e.printStackTrace();
 	}
