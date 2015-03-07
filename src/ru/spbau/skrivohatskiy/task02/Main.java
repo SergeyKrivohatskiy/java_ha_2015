@@ -101,18 +101,27 @@ public class Main {
      * @param pathsList
      *            files and web pages paths. Relative paths for files and page
      *            paths started with "http://" for web pages
-     * @throws IOException
      * 
      */
     private static void compress(String archiveFileName, List<String> pathsList)
 	    throws IOException {
 	try (ArchiveWriter archive = new ArchiveWriter(archiveFileName)) {
+	    int skippedUrls = 0;
+	    int skippedFiles = 0;
 	    for (String path : pathsList) {
 		if (isUrl(path)) {
-		    processUrl(archive, path);
+		    if (!processUrl(archive, path)) {
+			skippedUrls += 1;
+		    }
 		} else {
-		    processFsPath(archive, path);
+		    skippedFiles += processFsPath(archive, path);
 		}
+	    }
+	    if (skippedFiles > 0) {
+		DEF_OUT.println(String.format("Skipped %d files", skippedFiles));
+	    }
+	    if (skippedUrls > 0) {
+		DEF_OUT.println(String.format("Skipped %d urls", skippedUrls));
 	    }
 	}
     }
@@ -123,14 +132,13 @@ public class Main {
      * 
      * @param archiveFileName
      *            name of the archive file to extract
-     * @throws IOException
-     * @throws ArchiveProcessingException
      * 
      */
     private static void decompress(String archiveFileName) throws IOException,
 	    ArchiveProcessingException {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
 	    DataPart part;
+	    int skippedFiles = 0;
 	    while ((part = archive.readNextDataPart()) != null) {
 		Path fsPath;
 		if (isUrl(part.key)) {
@@ -138,8 +146,24 @@ public class Main {
 		} else {
 		    fsPath = Paths.get(part.key);
 		}
-		Files.createDirectories(fsPath.getParent());
-		Files.write(fsPath, part.data, StandardOpenOption.CREATE_NEW);
+		try {
+		    Files.createDirectories(fsPath.getParent());
+		    Files.write(fsPath, part.data,
+			    StandardOpenOption.CREATE_NEW);
+		} catch (SecurityException e) {
+		    DEF_OUT.println(String
+			    .format("Skipping file %s. File can't be written by the application because of java security manager. %s",
+				    fsPath.toString(), e.getMessage()));
+		    skippedFiles += 1;
+		} catch (IOException e) {
+		    DEF_OUT.println(String
+			    .format("Skipping file %s. File can't be written by the application. %s",
+				    fsPath.toString(), e.getMessage()));
+		    skippedFiles += 1;
+		}
+	    }
+	    if (skippedFiles > 0) {
+		DEF_OUT.println(String.format("Skipped %d files", skippedFiles));
 	    }
 	}
     }
@@ -161,8 +185,6 @@ public class Main {
      * 
      * @param archiveFileName
      *            name of the archive file to use
-     * @throws ArchiveProcessingException
-     * @throws IOException
      */
     private static void printTree(String archiveFileName) throws IOException,
 	    ArchiveProcessingException {
@@ -190,28 +212,32 @@ public class Main {
 		PRINT_TREE));
     }
 
-    private static void processFsPath(ArchiveWriter archive, String path)
+    /**
+     * @return count of skipped files
+     */
+    private static int processFsPath(ArchiveWriter archive, String path)
 	    throws IOException {
-	processFile(archive, new File(path));
+	return processFile(archive, new File(path));
     }
 
-    private static void processFile(ArchiveWriter archive, File file)
+    private static int processFile(ArchiveWriter archive, File file)
 	    throws IOException {
 	if (!file.exists()) {
 	    DEF_OUT.println(String.format(
 		    "Skipping file %s. File do not exists", file.getPath()));
-	    return;
+	    return 1;
 	} else if (!file.canRead()) {
 	    DEF_OUT.println(String.format(
 		    "Skipping file %s. File can't be read by the application",
 		    file.getPath()));
-	    return;
+	    return 1;
 	}
 	if (file.isDirectory()) {
+	    int filesScipped = 0;
 	    for (File dirFile : file.listFiles()) {
-		processFile(archive, dirFile);
+		filesScipped += processFile(archive, dirFile);
 	    }
-	    return;
+	    return filesScipped;
 	}
 
 	byte[] dataBytes = null;
@@ -219,20 +245,30 @@ public class Main {
 	    dataBytes = Files.readAllBytes(file.toPath());
 	} catch (SecurityException e) {
 	    DEF_OUT.println(String
-		    .format("Skipping file %s. File can't be red because of java security manager. $s",
+		    .format("Skipping file %s. File can't be red because of java security manager. %s",
 			    file.getPath(), e.getMessage()));
 	} catch (IOException e) {
 	    DEF_OUT.println(String.format(
 		    "Skipping file %s. Failed to read the file. %s",
 		    file.getPath(), e.getMessage()));
+	} catch (OutOfMemoryError e) {
+	    DEF_OUT.println(String.format(
+		    "Skipping file %s. File is too big. %s", file.getPath(),
+		    e.getMessage()));
 	}
 
 	if (dataBytes != null) {
 	    archive.writeDataPart(new DataPart(file.getPath(), dataBytes));
+	    return 0;
+	} else {
+	    return 1;
 	}
     }
 
-    private static void processUrl(ArchiveWriter archive, String path)
+    /**
+     * @return true if page is written to the archive
+     */
+    private static boolean processUrl(ArchiveWriter archive, String path)
 	    throws IOException {
 	byte[] dataBytes = null;
 	try (InputStream is = (new URL(path)).openStream()) {
@@ -249,7 +285,9 @@ public class Main {
 
 	if (dataBytes != null) {
 	    archive.writeDataPart(new DataPart(path, dataBytes));
+	    return true;
 	}
+	return false;
     }
 
     private static boolean isUrl(String path) {
