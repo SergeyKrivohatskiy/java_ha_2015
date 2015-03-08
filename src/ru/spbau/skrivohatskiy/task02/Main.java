@@ -73,21 +73,8 @@ public class Main {
 		printUsage();
 		break;
 	    }
-	} catch (SecurityException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (ZipException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (FileNotFoundException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (IOException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
-	} catch (ArchiveProcessingException e) {
-	    // TODO Auto-generated catch block
-	    e.printStackTrace();
+	} catch (SecurityException | IOException | ArchiveProcessingException e) {
+	    processException(e);
 	}
 
     }
@@ -210,6 +197,39 @@ public class Main {
 		+ "\'%s\' to print files list of an existing archive";
 	DEF_OUT.println(String.format(usageFormatLine, COMPRESS, DECOMPRESS,
 		PRINT_TREE));
+    }
+
+    private static void processException(Throwable exception) {
+	if (exception instanceof FileNotFoundException) {
+	    DEF_OUT.println("Specified archive file not found or unavailable");
+	    DEF_OUT.println("Please check programm arguments");
+	} else if (exception instanceof ZipException) {
+	    DEF_OUT.println("Failed to read or write the archive. It has bad zip format");
+	} else if (exception instanceof IOException) {
+	    DEF_OUT.println("Failed to read or write the archive file");
+	} else if (exception instanceof SecurityException) {
+	    DEF_OUT.println("Failed to read or write the archive file because of java security manager");
+	} else if (exception instanceof ArchiveProcessingException) {
+	    DEF_OUT.println("Failed to read the archive");
+	    DEF_OUT.println("Application can read only the archives succesfully created by itself");
+	} else {
+	    throw new IllegalArgumentException("Cant process exception",
+		    exception);
+	}
+
+	DEF_OUT.println("Exception message:");
+	DEF_OUT.println(exception.getMessage());
+
+	if (exception.getSuppressed().length == 0) {
+	    return;
+	}
+
+	DEF_OUT.println("Supressed exceptions:");
+
+	for (Throwable supressedExc : exception.getSuppressed()) {
+	    processException(supressedExc);
+	}
+
     }
 
     /**
