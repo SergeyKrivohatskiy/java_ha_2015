@@ -19,6 +19,7 @@ import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveProcessingException;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveReader;
 import ru.spbau.skrivohatskiy.task02.archiveManager.ArchiveWriter;
 import ru.spbau.skrivohatskiy.task02.archiveManager.DataPart;
+import ru.spbau.skrivohatskiy.task02.utils.DirectoryTreeBuilder;
 import ru.spbau.skrivohatskiy.task02.utils.Utils;
 
 /**
@@ -134,18 +135,20 @@ public class Main {
 		    fsPath = Paths.get(part.key);
 		}
 		try {
-		    Files.createDirectories(fsPath.getParent());
+		    if (fsPath.getParent() != null) {
+			Files.createDirectories(fsPath.getParent());
+		    }
 		    Files.write(fsPath, part.data,
 			    StandardOpenOption.CREATE_NEW);
 		} catch (SecurityException e) {
 		    DEF_OUT.println(String
-			    .format("Skipping file %s. File can't be written by the application because of java security manager. %s",
-				    fsPath.toString(), e.getMessage()));
+			    .format("Skipping file %s. File can't be written by the application because of java security manager",
+				    fsPath.toString()));
 		    skippedFiles += 1;
 		} catch (IOException e) {
 		    DEF_OUT.println(String
-			    .format("Skipping file %s. File can't be written by the application. %s",
-				    fsPath.toString(), e.getMessage()));
+			    .format("Skipping file %s. File can't be written by the application",
+				    fsPath.toString()));
 		    skippedFiles += 1;
 		}
 	    }
@@ -176,7 +179,7 @@ public class Main {
     private static void printTree(String archiveFileName) throws IOException,
 	    ArchiveProcessingException {
 	try (ArchiveReader archive = new ArchiveReader(archiveFileName)) {
-	    DirectoryTreeBuilder treeBuilder = new DirectoryTreeBuilder();
+	    DirectoryTreeBuilder treeBuilder = new DirectoryTreeBuilder(false);
 	    DataPart part;
 	    while ((part = archive.readNextDataPart()) != null) {
 		if (isUrl(part.key)) {
@@ -265,16 +268,17 @@ public class Main {
 	    dataBytes = Files.readAllBytes(file.toPath());
 	} catch (SecurityException e) {
 	    DEF_OUT.println(String
-		    .format("Skipping file %s. File can't be red because of java security manager. %s",
-			    file.getPath(), e.getMessage()));
+		    .format("Skipping file %s. File can't be red because of java security manager",
+			    file.getPath()));
 	} catch (IOException e) {
-	    DEF_OUT.println(String.format(
-		    "Skipping file %s. Failed to read the file. %s",
-		    file.getPath(), e.getMessage()));
+	    if (dataBytes == null) { // let IOException on close be OK
+		DEF_OUT.println(String.format(
+			"Skipping file %s. Failed to read the file",
+			file.getPath()));
+	    }
 	} catch (OutOfMemoryError e) {
-	    DEF_OUT.println(String.format(
-		    "Skipping file %s. File is too big. %s", file.getPath(),
-		    e.getMessage()));
+	    DEF_OUT.println(String.format("Skipping file %s. File is too big",
+		    file.getPath()));
 	}
 
 	if (dataBytes != null) {
@@ -295,12 +299,12 @@ public class Main {
 	    dataBytes = Utils.readAllBytes(is);
 	} catch (MalformedURLException e) {
 	    DEF_OUT.println(String.format(
-		    "Skipping url %s. Failed to parse the url. %s", path,
-		    e.getMessage()));
+		    "Skipping url %s. Failed to parse the url", path));
 	} catch (IOException e) {
-	    DEF_OUT.println(String.format(
-		    "Skipping url %s. Failed to read page content. %s", path,
-		    e.getMessage()));
+	    if (dataBytes == null) { // let IOException on close be OK
+		DEF_OUT.println(String.format(
+			"Skipping url %s. Failed to read page content", path));
+	    }
 	}
 
 	if (dataBytes != null) {

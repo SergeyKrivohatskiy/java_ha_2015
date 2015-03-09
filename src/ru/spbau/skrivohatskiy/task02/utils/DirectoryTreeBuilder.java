@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ru.spbau.skrivohatskiy.task02;
+package ru.spbau.skrivohatskiy.task02.utils;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
@@ -18,6 +18,18 @@ public class DirectoryTreeBuilder {
 
     private static final String PRECESSOR_ADDITION = "	|";
     private final Node root = new Node();
+    private final boolean showHidden;
+
+    /**
+     * Creates new DirectoryTreeBuilder
+     * 
+     * @param showHidden
+     *            if true hidden directories and files will be skipped while
+     *            printing
+     */
+    public DirectoryTreeBuilder(boolean showHidden) {
+	this.showHidden = showHidden;
+    }
 
     /**
      * Appends specified path to directory tree
@@ -38,6 +50,9 @@ public class DirectoryTreeBuilder {
 	    return;
 	}
 	for (Map.Entry<String, Node> child : children.entrySet()) {
+	    if (!showHidden && child.getKey().startsWith(".")) {
+		continue;
+	    }
 	    out.print(precessor);
 	    out.print('_');
 	    out.print(child.getKey());
