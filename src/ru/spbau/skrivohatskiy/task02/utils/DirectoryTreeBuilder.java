@@ -24,7 +24,7 @@ public class DirectoryTreeBuilder {
      * Creates new DirectoryTreeBuilder
      * 
      * @param showHidden
-     *            if true hidden directories and files will be skipped while
+     *            if true hidden directories and files wont be skipped while
      *            printing
      */
     public DirectoryTreeBuilder(boolean showHidden) {
