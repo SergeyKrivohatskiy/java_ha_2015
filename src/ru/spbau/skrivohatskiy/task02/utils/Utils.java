@@ -31,4 +31,14 @@ public class Utils {
 	}
 	return dataBytesOS.toByteArray();
     }
+
+    /**
+     * @param count
+     *            spaces count
+     * @return string containing count spaces
+     */
+    public static String spaces(int count) {
+	return String.format("%" + count + "s", "");
+    }
+
 }

@@ -5,7 +5,9 @@ package ru.spbau.skrivohatskiy.task02.utils;
 
 import java.io.PrintStream;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
@@ -16,7 +18,7 @@ import java.util.TreeMap;
  */
 public class DirectoryTreeBuilder {
 
-    private static final String PRECESSOR_ADDITION = "	|";
+    private static final String DELIMER = "|";
     private final Node root = new Node();
     private final boolean showHidden;
 
@@ -49,15 +51,21 @@ public class DirectoryTreeBuilder {
 	if (children.isEmpty()) {
 	    return;
 	}
-	for (Map.Entry<String, Node> child : children.entrySet()) {
+	for (Iterator<Entry<String, Node>> it = children.entrySet().iterator(); it
+		.hasNext();) {
+	    Entry<String, Node> child = it.next();
 	    if (!showHidden && child.getKey().startsWith(".")) {
 		continue;
 	    }
 	    out.print(precessor);
+	    out.print(DELIMER);
 	    out.print('_');
 	    out.print(child.getKey());
 	    out.println();
-	    print(child.getValue(), out, precessor + PRECESSOR_ADDITION);
+	    print(child.getValue(),
+		    out,
+		    precessor + (it.hasNext() ? DELIMER : " ")
+			    + Utils.spaces(child.getKey().length() + 1));
 	}
     }
 
@@ -66,12 +74,12 @@ public class DirectoryTreeBuilder {
      * 
      * <pre>
      * |_subfolder1
-     * |	|_subfolder 1.1
-     * |	|	|_a.txt
-     * |	|_subfolder 1.2
+     * |           |_subfolder 1.1
+     * |           |              |_a.txt
+     * |           |_subfolder 1.2
      * |_http
-     * |	|_page1
-     * |	|_page2
+     *       |_page1
+     *       |_page2
      * </pre>
      * 
      * ignoring hidden files and directories
@@ -80,7 +88,7 @@ public class DirectoryTreeBuilder {
      *            prints to this output
      */
     public void print(PrintStream out) {
-	print(root, out, "|");
+	print(root, out, "");
     }
 
     private static class Node {
