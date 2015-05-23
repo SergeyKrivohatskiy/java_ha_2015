@@ -56,9 +56,14 @@ public class DistributedSerializator<T> {
 	    }
 	    Class<?> returnType = mtd.getReturnType();
 	    if (!(returnType.equals(String.class)
-		    || returnType.equals(Integer.class)
-		    || returnType.equals(Double.class) || returnType
-			.equals(Character.class))) {
+		    || returnType.equals(long.class)
+		    || returnType.equals(int.class)
+		    || returnType.equals(short.class)
+		    || returnType.equals(byte.class)
+		    || returnType.equals(char.class)
+		    || returnType.equals(boolean.class)
+		    || returnType.equals(float.class) || returnType
+			.equals(double.class))) {
 		continue;
 	    }
 	    getters.put(mtd.getName().substring(3), mtd);
@@ -275,19 +280,34 @@ public class DistributedSerializator<T> {
 		if (clazz.equals(String.class)) {
 		    return val;
 		}
-		if (clazz.equals(Integer.class)) {
+		if (clazz.equals(long.class)) {
+		    return Long.valueOf(val);
+		}
+		if (clazz.equals(int.class)) {
 		    return Integer.valueOf(val);
 		}
-		if (clazz.equals(Double.class)) {
-		    return Double.valueOf(val);
+		if (clazz.equals(short.class)) {
+		    return Short.valueOf(val);
 		}
-		if (clazz.equals(Character.class)) {
+		if (clazz.equals(byte.class)) {
+		    return Byte.valueOf(val);
+		}
+		if (clazz.equals(char.class)) {
 		    if (val.length() != 1) {
 			throw new DeserializationException(
 				"Invalid data for Character class. "
 					+ "Expected a string of length 1");
 		    }
 		    return Character.valueOf(val.charAt(0));
+		}
+		if (clazz.equals(boolean.class)) {
+		    return Boolean.valueOf(val);
+		}
+		if (clazz.equals(float.class)) {
+		    return Float.valueOf(val);
+		}
+		if (clazz.equals(double.class)) {
+		    return Double.valueOf(val);
 		}
 	    } catch (NumberFormatException e) {
 		throw new DeserializationException(
