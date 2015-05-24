@@ -43,8 +43,7 @@ public class SerializatorTests {
     @Test
     public void testSimpleSerialization() throws InterruptedException,
 	    ExecutionException, DeserializationException {
-	DistributedSerializator<SerializableTestClass> serializator = new DistributedSerializator<SerializableTestClass>(
-		SerializableTestClass.class);
+	DistributedSerializator<SerializableTestClass> serializator = new DistributedSerializator<SerializableTestClass>();
 	SerializableTestClass t = new SerializableTestClass(1321,
 		"Correct String");
 
@@ -54,8 +53,7 @@ public class SerializatorTests {
     @Test
     public void stressTest() throws InterruptedException {
 	ExecutorService executor = Executors.newFixedThreadPool(THREADS_COUNT);
-	DistributedSerializator<SerializableTestClass> serializator = new DistributedSerializator<SerializableTestClass>(
-		SerializableTestClass.class);
+	DistributedSerializator<SerializableTestClass> serializator = new DistributedSerializator<SerializableTestClass>();
 	AtomicInteger successCounter = new AtomicInteger();
 	for (int i = 0; i < THREADS_COUNT; i++) {
 	    final String threadIdx = Integer.toString(i);

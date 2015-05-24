@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -34,57 +35,18 @@ public class DistributedSerializator<T> {
 
     private static final int DEF_N_THREADS = 10;
     private static final String SERIALIZATION_COMMENTS = "Created by DistributedSerializator";
+    // Method names can't contain '-'. So there will be no conflicts with other
+    // properties
+    private static final String CLASS_NAME_PROP = "--class--";
     private final Set<String> locks = new HashSet<String>();
     private final Map<String, T> deserializedCache = new ConcurrentHashMap<String, T>();
     private final ExecutorService executor;
-    private final Class<?> tClazz;
-    private final Map<String, Method> getters = new HashMap<String, Method>();
-    private final Map<String, Method> setters = new HashMap<String, Method>();
 
     /**
-     * @param tClazz
-     *            T.class that used for building T objects while deserialization
-     *            and getting information about objects properties
+     * Create DistributedSerializator
      */
-    public DistributedSerializator(Class<T> tClazz) {
+    public DistributedSerializator() {
 	executor = Executors.newFixedThreadPool(DEF_N_THREADS);
-	this.tClazz = tClazz;
-	for (Method mtd : tClazz.getMethods()) {
-	    if (!mtd.getName().startsWith("get")
-		    || mtd.getParameterCount() != 0) {
-		continue;
-	    }
-	    Class<?> returnType = mtd.getReturnType();
-	    if (!(returnType.equals(String.class)
-		    || returnType.equals(long.class)
-		    || returnType.equals(int.class)
-		    || returnType.equals(short.class)
-		    || returnType.equals(byte.class)
-		    || returnType.equals(char.class)
-		    || returnType.equals(boolean.class)
-		    || returnType.equals(float.class) || returnType
-			.equals(double.class))) {
-		continue;
-	    }
-	    getters.put(mtd.getName().substring(3), mtd);
-	}
-	for (Method mtd : tClazz.getMethods()) {
-	    if (!mtd.getName().startsWith("set")
-		    || mtd.getParameterCount() != 1) {
-		continue;
-	    }
-	    String name = mtd.getName().substring(3);
-	    Method getter = getters.get(name);
-	    // Deserialize only properties serialized with
-	    // DistributedSerializator
-	    if (getter == null) {
-		continue;
-	    }
-	    if (!getter.getReturnType().equals(mtd.getParameterTypes()[0])) {
-		continue;
-	    }
-	    setters.put(name, mtd);
-	}
     }
 
     private void getLockForName(String name) throws InterruptedException {
@@ -130,9 +92,14 @@ public class DistributedSerializator<T> {
      */
     public T get(String name) throws DeserializationException,
 	    InterruptedException {
+	T result = deserializedCache.get(name);
+	if (result != null) {
+	    return result;
+	}
 	getLockForName(name);
 	try {
-	    T result = deserializedCache.get(name);
+	    // Double checking
+	    result = deserializedCache.get(name);
 	    if (result != null) {
 		return result;
 	    }
@@ -167,13 +134,13 @@ public class DistributedSerializator<T> {
 	@Override
 	public Boolean call() {
 	    try {
-		if (!object.getClass().equals(tClazz)) {
-		    return false;
-		}
+		Class<?> clazz = object.getClass();
 
 		Properties props = new Properties();
+		props.setProperty(CLASS_NAME_PROP, clazz.getName());
 
-		for (Entry<String, Method> getter : getters.entrySet()) {
+		for (Entry<String, Method> getter : getGetters(clazz)
+			.entrySet()) {
 		    String val = getter.getValue().invoke(object).toString();
 		    props.setProperty(getter.getKey(), val);
 		    if (Thread.currentThread().isInterrupted()) {
@@ -221,9 +188,9 @@ public class DistributedSerializator<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private T createObject() throws DeserializationException {
+	private T createObject(Class<?> clazz) throws DeserializationException {
 	    try {
-		return (T) tClazz.newInstance();
+		return (T) clazz.newInstance();
 	    } catch (InstantiationException | IllegalAccessException e) {
 		throw new DeserializationException(
 			"Can't create instance from the class object", e);
@@ -239,19 +206,27 @@ public class DistributedSerializator<T> {
 		    new FileInputStream(instanceNameToFile(name)))) {
 		Properties props = new Properties();
 		props.load(in);
+		Class<?> clazz = Class.forName(props
+			.getProperty(CLASS_NAME_PROP));
 
-		T result = createObject();
-		for (Entry<String, Method> setter : setters.entrySet()) {
-		    String val = props.getProperty(setter.getKey());
-		    Object valToSet = stringToInstance(val, setter.getValue()
-			    .getParameterTypes()[0]);
-		    setter.getValue().invoke(result, valToSet);
+		T result = createObject(clazz);
+		Map<String, Method> setters = getSetters(clazz);
+		for (String propertyKey : props.stringPropertyNames()) {
+		    Method setter = setters.get(propertyKey);
+		    if (setter == null) {
+			continue;
+		    }
+		    String val = props.getProperty(propertyKey);
+		    setter.invoke(result,
+			    stringToClazz(val, setter.getParameterTypes()[0]));
 		    if (Thread.currentThread().isInterrupted()) {
 			throw new InterruptedException();
 		    }
 		}
 		deserializedCache.put(name, result);
 		return result;
+	    } catch (LinkageError | ClassNotFoundException e) {
+		throw new DeserializationException("Class can't be loaded", e);
 	    } catch (FileNotFoundException e) {
 		throw new DeserializationException("Serialized data not found",
 			e);
@@ -274,48 +249,72 @@ public class DistributedSerializator<T> {
 	    }
 	}
 
-	private Object stringToInstance(String val, Class<?> clazz)
+	private Object stringToClazz(String val, Class<?> class1)
 		throws DeserializationException {
-	    try {
-		if (clazz.equals(String.class)) {
-		    return val;
-		}
-		if (clazz.equals(long.class)) {
-		    return Long.valueOf(val);
-		}
-		if (clazz.equals(int.class)) {
-		    return Integer.valueOf(val);
-		}
-		if (clazz.equals(short.class)) {
-		    return Short.valueOf(val);
-		}
-		if (clazz.equals(byte.class)) {
-		    return Byte.valueOf(val);
-		}
-		if (clazz.equals(char.class)) {
-		    if (val.length() != 1) {
-			throw new DeserializationException(
-				"Invalid data for Character class. "
-					+ "Expected a string of length 1");
-		    }
-		    return Character.valueOf(val.charAt(0));
-		}
-		if (clazz.equals(boolean.class)) {
-		    return Boolean.valueOf(val);
-		}
-		if (clazz.equals(float.class)) {
-		    return Float.valueOf(val);
-		}
-		if (clazz.equals(double.class)) {
-		    return Double.valueOf(val);
-		}
-	    } catch (NumberFormatException e) {
-		throw new DeserializationException(
-			"Failed to read serialized propertie from " + val
-				+ " for " + clazz.getName(), e);
+	    if (class1.equals(String.class)) {
+		return val;
 	    }
-	    // Should not be. Unprocessed class
-	    throw new RuntimeException("Invalid class");
+	    if (class1.equals(char.class)) {
+		if (val.length() != 1) {
+		    throw new DeserializationException(
+			    "Expected string of length 1. Got " + val);
+		}
+		return val.charAt(0);
+	    }
+	    try {
+		return Array.get(Array.newInstance(class1, 1), 0).getClass()
+			.getConstructor(String.class).newInstance(val);
+	    } catch (InvocationTargetException e) {
+		throw new DeserializationException(
+			"Exception happends while parsing property", e);
+	    } catch (SecurityException e) {
+		throw new DeserializationException("Can't serialize property",
+			e);
+	    } catch (ArrayIndexOutOfBoundsException
+		    | NegativeArraySizeException | NoSuchMethodException
+		    | InstantiationException | IllegalAccessException
+		    | IllegalArgumentException e) {
+		// Can't be
+		throw new RuntimeException(e);
+	    }
 	}
+    }
+
+    private final static Map<String, Method> getGetters(Class<?> clazz) {
+	Map<String, Method> getters = new HashMap<String, Method>();
+	for (Method mtd : clazz.getMethods()) {
+	    if (!mtd.getName().startsWith("get")
+		    || mtd.getParameterCount() != 0) {
+		continue;
+	    }
+	    Class<?> returnType = mtd.getReturnType();
+	    if (!isPrimitiveOrStringClass(returnType)) {
+		continue;
+	    }
+	    getters.put(mtd.getName().substring(3), mtd);
+	}
+	return getters;
+    }
+
+    private final static Map<String, Method> getSetters(Class<?> clazz) {
+	Map<String, Method> setters = new HashMap<String, Method>();
+	for (Method mtd : clazz.getMethods()) {
+	    if (!mtd.getName().startsWith("set")
+		    || mtd.getParameterCount() != 1
+		    || !isPrimitiveOrStringClass(mtd.getParameterTypes()[0])) {
+		continue;
+	    }
+	    String name = mtd.getName().substring(3);
+	    setters.put(name, mtd);
+	}
+	return setters;
+    }
+
+    private static boolean isPrimitiveOrStringClass(Class<?> clazz) {
+	return clazz.equals(String.class) || clazz.equals(long.class)
+		|| clazz.equals(int.class) || clazz.equals(short.class)
+		|| clazz.equals(byte.class) || clazz.equals(char.class)
+		|| clazz.equals(boolean.class) || clazz.equals(float.class)
+		|| clazz.equals(double.class);
     }
 }
