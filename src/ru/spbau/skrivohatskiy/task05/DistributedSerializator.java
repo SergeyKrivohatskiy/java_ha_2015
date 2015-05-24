@@ -21,6 +21,7 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -96,16 +97,16 @@ public class DistributedSerializator<T> {
 	if (result != null) {
 	    return result;
 	}
-	getLockForName(name);
 	try {
-	    // Double checking
-	    result = deserializedCache.get(name);
-	    if (result != null) {
-		return result;
+	    return executor.submit(this.new DeserializeTask(name, true)).get();
+	} catch (ExecutionException e) {
+	    if (e.getCause() instanceof InterruptedException) {
+		throw (InterruptedException) e.getCause();
 	    }
-	    return this.new DeserializeTask(name, false).call();
-	} finally {
-	    unlockByName(name);
+	    if (e.getCause() instanceof DeserializationException) {
+		throw (DeserializationException) e.getCause();
+	    }
+	    throw new RuntimeException("Unexpected", e);
 	}
     }
 
@@ -115,7 +116,7 @@ public class DistributedSerializator<T> {
      * @return deserialized instance
      */
     public Future<T> deserialize(String name) {
-	return executor.submit(this.new DeserializeTask(name, true));
+	return executor.submit(this.new DeserializeTask(name, false));
     }
 
     private File instanceNameToFile(String name) {
@@ -180,11 +181,11 @@ public class DistributedSerializator<T> {
 
     private class DeserializeTask implements Callable<T> {
 	private final String name;
-	private final boolean takeLock;
+	private final boolean checkAlreadyDeserialized;
 
-	public DeserializeTask(String name, boolean takeLock) {
+	public DeserializeTask(String name, boolean checkAlreadyDeserialized) {
 	    this.name = name;
-	    this.takeLock = takeLock;
+	    this.checkAlreadyDeserialized = checkAlreadyDeserialized;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -199,53 +200,59 @@ public class DistributedSerializator<T> {
 
 	@Override
 	public T call() throws DeserializationException, InterruptedException {
-	    if (takeLock) {
-		getLockForName(name);
-	    }
-	    try (BufferedInputStream in = new BufferedInputStream(
-		    new FileInputStream(instanceNameToFile(name)))) {
-		Properties props = new Properties();
-		props.load(in);
-		Class<?> clazz = Class.forName(props
-			.getProperty(CLASS_NAME_PROP));
+	    getLockForName(name);
+	    try {
+		if (checkAlreadyDeserialized) {
+		    if (deserializedCache.containsKey(name)) {
+			return deserializedCache.get(name);
+		    }
+		}
+		try (BufferedInputStream in = new BufferedInputStream(
+			new FileInputStream(instanceNameToFile(name)))) {
+		    Properties props = new Properties();
+		    props.load(in);
+		    Class<?> clazz = Class.forName(props
+			    .getProperty(CLASS_NAME_PROP));
 
-		T result = createObject(clazz);
-		Map<String, Method> setters = getSetters(clazz);
-		for (String propertyKey : props.stringPropertyNames()) {
-		    Method setter = setters.get(propertyKey);
-		    if (setter == null) {
-			continue;
+		    T result = createObject(clazz);
+		    Map<String, Method> setters = getSetters(clazz);
+		    for (String propertyKey : props.stringPropertyNames()) {
+			Method setter = setters.get(propertyKey);
+			if (setter == null) {
+			    continue;
+			}
+			String val = props.getProperty(propertyKey);
+			setter.invoke(
+				result,
+				stringToClazz(val,
+					setter.getParameterTypes()[0]));
+			if (Thread.currentThread().isInterrupted()) {
+			    throw new InterruptedException();
+			}
 		    }
-		    String val = props.getProperty(propertyKey);
-		    setter.invoke(result,
-			    stringToClazz(val, setter.getParameterTypes()[0]));
-		    if (Thread.currentThread().isInterrupted()) {
-			throw new InterruptedException();
-		    }
+		    deserializedCache.put(name, result);
+		    return result;
+		} catch (LinkageError | ClassNotFoundException e) {
+		    throw new DeserializationException("Class can't be loaded",
+			    e);
+		} catch (FileNotFoundException e) {
+		    throw new DeserializationException(
+			    "Serialized data not found", e);
+		} catch (IOException e) {
+		    throw new DeserializationException(
+			    "Can't read serialized data", e);
+		} catch (IllegalAccessException e) {
+		    throw new DeserializationException(
+			    "Can't access setter method", e);
+		} catch (IllegalArgumentException e) {
+		    // Can't be. See stringToInstance
+		    throw new RuntimeException();
+		} catch (InvocationTargetException e) {
+		    throw new DeserializationException(
+			    "Exception happends while invocing setter", e);
 		}
-		deserializedCache.put(name, result);
-		return result;
-	    } catch (LinkageError | ClassNotFoundException e) {
-		throw new DeserializationException("Class can't be loaded", e);
-	    } catch (FileNotFoundException e) {
-		throw new DeserializationException("Serialized data not found",
-			e);
-	    } catch (IOException e) {
-		throw new DeserializationException(
-			"Can't read serialized data", e);
-	    } catch (IllegalAccessException e) {
-		throw new DeserializationException(
-			"Can't access setter method", e);
-	    } catch (IllegalArgumentException e) {
-		// Can't be. See stringToInstance
-		throw new RuntimeException();
-	    } catch (InvocationTargetException e) {
-		throw new DeserializationException(
-			"Exception happends while invocing setter", e);
 	    } finally {
-		if (takeLock) {
-		    unlockByName(name);
-		}
+		unlockByName(name);
 	    }
 	}
 
