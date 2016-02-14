@@ -23,7 +23,6 @@ import ru.spbau.skrivohatskiy.task05.DistributedSerializator;
  * @author Sergey Krivohatskiy
  *
  */
-@SuppressWarnings("javadoc")
 public class SerializatorTests {
 
     private static final String TEST_INSTANCE_NAME = "test name";

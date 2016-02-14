@@ -7,7 +7,6 @@ package ru.spbau.skrivohatskiy.task05.tests;
  * @author Sergey Krivohatskiy
  *
  */
-@SuppressWarnings("javadoc")
 public class SerializableTestClass {
 
     private String strVal;
